@@ -1,28 +1,37 @@
-
+import threading
+import Sniffer
+import SocketServer
+import time
 from mac_vendor_lookup import MacLookup
-from scapy.all import *
 
-mac = MacLookup()
+def main():
+    Devices = {}
+    Mutex = threading.Lock()
+    SnifferObj = Sniffer.Sniffer(Devices, Mutex)
+    SocketObj = SocketServer.SocketServer(Devices, Mutex)
 
-conf.iface = "mon0"
-devices = {}
-## Define our Custom Action function
-def custom_action(packet):
-    if packet.haslayer(Dot11):
-        if packet.addr2 and str(packet.addr2) not in devices :
-            devices[str(packet.addr2)] = [packet.dBm_AntSignal]
+    print("Starting SnifferThread")
+    SnifferThread = threading.Thread(target=SnifferObj.run)
+    SnifferThread.start()
 
-            try:
-                device = mac.lookup(packet.addr2)
-            except:
-                device = str(packet.addr2)
+    print("Starting SocketThread")
+    SocketThread = threading.Thread(target=SocketObj.run)
+    SocketThread.start()
 
-            print(len(devices), device ,str(packet.dBm_AntSignal) + "dBm")
+    while True:
+        Mutex.acquire()
+        try:
+            for MAC, RSSI in Devices.items():
+                try:
+                    print(MacLookup().lookup(MAC) + "\t\t" + str(RSSI))
+                except:
+                    print(MAC + "\t\t" + str(RSSI))
+        finally:
+            Mutex.release()
 
-        else:
-            devices[str(packet.addr2)] += [packet.dBm_AntSignal]
-            print(mac.lookup(packet.addr2),devices[str(packet.addr2)])
+        print("\n \t----------------------- \n")
+        time.sleep(10)
 
 
-## Setup sniff
-sniff(prn=custom_action)
+if __name__ == "__main__":
+    main()
