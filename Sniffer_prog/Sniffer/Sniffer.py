@@ -1,4 +1,3 @@
-from mac_vendor_lookup import MacLookup
 import threading
 import collections
 from scapy.all import sniff, Dot11
@@ -19,7 +18,7 @@ class Sniffer():
                 self.mut.acquire()
                 if packet.addr2 and str(packet.addr2) not in self.devices and packet.dBm_AntSignal > -69:
                     # Make circularbuffer if MAC does not exist in devices
-                    temp = collections.deque(maxlen = 2)
+                    temp = collections.deque(maxlen = 10)
                     # Append to buffer
                     temp.append(packet.dBm_AntSignal)
                     # set MAC in devicess to temp value (RSSI)

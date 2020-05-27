@@ -1,7 +1,6 @@
 import threading
 import Sniffer
 import time
-from mac_vendor_lookup import MacLookup
 
 def main():
     Devices = {}
